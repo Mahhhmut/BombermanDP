@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 3
+  tags:
+  - Enemies
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - SolidMap
+  - BreakableMap
+  - WalkableMap
+  - Bomb
+  - Player
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Ground
+    uniqueID: 204752323
+    locked: 0
+  - name: Unbreakable
+    uniqueID: 2273268947
+    locked: 0
+  - name: Breakable
+    uniqueID: 2298029015
+    locked: 0
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Map
+    uniqueID: 3320896815
+    locked: 0
+  - name: bombs
+    uniqueID: 36955669
+    locked: 0
+  - name: Players
+    uniqueID: 1993452335
+    locked: 0
+  m_RenderingLayers:
+  - Default
