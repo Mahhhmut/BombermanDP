@@ -34,15 +34,9 @@ public class MapManager : MonoBehaviour
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
     };
 
-    public void ChooseThemeCreateMap(Theme theme)
+    public void ChooseThemeCreateMap(IMapThemeStrategy theme)
     {
-        _activeFactory = theme switch
-        {
-            Theme.city => new CityMapFactory(),
-            Theme.jungle => new JungleMapFactory(),
-            Theme.desert => new DesertMapFactory(),
-            _ => throw new System.ArgumentException("Invalid Theme")
-        };
+        _activeFactory = theme.GetFactory();
 
         // Üç Tilemap'i temizle
         _groundTilemap.ClearAllTiles();

@@ -1,53 +1,50 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
-// Bu script'i yalnızca bir kere oluşturacağımız için Singleton deseni kullanıyoruz.
 public class GameManager : MonoBehaviour
 {
-    // 1. Singleton Örneği (Instance)
     public static GameManager Instance { get; private set; }
 
-    // Inspector'dan atanacak MapManager referansı
-    // MapManager'ı sahnede aktif hale getiren script'i tutar.
-    [SerializeField] private MapManager mapManager; 
-
-    // 2. Oyun durumunu veya seviyesini tutmak için bir değişken
+    private MapManager mapManager; 
     public Theme activeTheme { get; private set; } = Theme.city; 
 
     void Awake()
     {
-        // Singleton mantığı: Sadece tek bir kopyanın varlığını garanti eder.
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
-        else
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+
+    // Sahne her yüklendiğinde otomatik harita çizmeyi tetikler
+    void OnEnable() => SceneManager.sceneLoaded += OnSceneLoaded;
+    void OnDisable() => SceneManager.sceneLoaded -= OnSceneLoaded;
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "MainScene") // Oyun sahnesinin adı tam olarak bu olmalı
         {
-            Instance = this;
-            // Sahne değiştirildiğinde objenin yok olmamasını sağlar (Opsiyonel)
-            DontDestroyOnLoad(gameObject); 
+            mapManager = FindFirstObjectByType<MapManager>();
+            if (mapManager != null) LoadStartingScene();
         }
     }
 
-    void Start()
-    {
-        // 3. Harita Oluşturmayı Tetikleme
-        if (mapManager != null)
-        {
-            LoadStartingScene();
-        }
-        else
-        {
-            Debug.LogError("Map Manager atanmamış! Lütfen Inspector'dan atayın.");
-        }
-    }
-    
-    // 4. Seviye Yükleme Metodu
+    public void SetTheme(Theme newTheme) => activeTheme = newTheme;
+
     public void LoadStartingScene()
     {
-        // MapManager'a aktif temayı ileterek harita çizimini başlatır (Client çağrısı).
-        Debug.Log($"GameManager: {activeTheme} Teması ile harita oluşturuluyor.");
-        mapManager.ChooseThemeCreateMap(activeTheme);
-    }
+        IMapThemeStrategy selectedStrategy = activeTheme switch
+        {
+            Theme.city => new CityStrategy(),
+            Theme.jungle => new JungleStrategy(),
+            Theme.desert => new DesertStrategy(),
+            _ => new CityStrategy()
+        };
 
-    // Harita oluşturulduktan sonra oyuncuyu yerleştirme vb. metotlar buraya gelir...
+        if (mapManager != null)
+            mapManager.ChooseThemeCreateMap(selectedStrategy);
+    }
 }
