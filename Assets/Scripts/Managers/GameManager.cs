@@ -11,7 +11,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private MapManager mapManager; 
 
     // 2. Oyun durumunu veya seviyesini tutmak için bir değişken
-    public Theme activeTheme { get; private set; } = Theme.jungle; 
+    public Theme activeTheme { get; private set; } = Theme.city; 
 
     void Awake()
     {

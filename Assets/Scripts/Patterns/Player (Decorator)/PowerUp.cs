@@ -8,6 +8,7 @@ public class PowerUp : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        Debug.Log("Temas var: " +other.name);
         if (other.CompareTag("Player"))
         {
             //player a güç ver
@@ -34,7 +35,7 @@ public class PowerUp : MonoBehaviour
             playerScript._currentAbility = new SpeedUpDecorator(playerScript._currentAbility);
             break;
     }
-        Debug.Log($"{type} uygulandı! Yeni Hız: {playerScript._currentAbility.MovementSpeed}");
+        Debug.Log($"{type} uygulandı!");
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     
