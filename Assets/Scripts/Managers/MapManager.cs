@@ -1,25 +1,27 @@
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public enum Theme {desert, jungle, city}
+public enum Theme { desert, jungle, city }
 
-public class MapManager : MonoBehaviour
+public class MapManager : NetworkBehaviour
 {
-    // inspectordan atanacak bileşenler
     [SerializeField] private Grid _grid;
-    // TEK TILEMAP YERİNE ÜÇ YENİ ALAN
     [SerializeField] private Tilemap _groundTilemap; 
     [SerializeField] private Tilemap _wallTilemap;   
     [SerializeField] private Tilemap _breakableTilemap; 
 
-    //aktif fabrika (tema seçiminden sonra atanacak)
-    private IMapFactory _activeFactory;
+    [Header("Multiplayer Prefab Ayarları")]
+    [SerializeField] private GameObject desertBreakablePrefab;
+    [SerializeField] private GameObject jungleBreakablePrefab;
+    [SerializeField] private GameObject cityBreakablePrefab;
 
-    // Not: 1=Duvar, 0=Yürünebilir Zemin, 2=Yıkılabilir Duvar.
+    private IMapFactory _activeFactory;
+    private Theme _currentTheme;
+
     private int[,] _mapData = new int[,]
     {
-        // 15 sütun genişliğinde (X)
-        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, // 13 satır yüksekliğinde (Y)
+        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
         {1, 0, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 0, 1},
         {1, 0, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0, 1},
         {1, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1},
@@ -34,54 +36,76 @@ public class MapManager : MonoBehaviour
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
     };
 
-    public void ChooseThemeCreateMap(IMapThemeStrategy theme)
+    public void ChooseThemeCreateMap(IMapThemeStrategy theme, Theme themeType)
     {
+        _currentTheme = themeType;
         _activeFactory = theme.GetFactory();
 
-        // Üç Tilemap'i temizle
         _groundTilemap.ClearAllTiles();
         _wallTilemap.ClearAllTiles();
         _breakableTilemap.ClearAllTiles();
         
         DrawMap();
+        Debug.Log("Map created with theme: " + themeType.ToString());
         KamerayiOrtala();
     }
 
     private void DrawMap()
-{
-    int width = _mapData.GetLength(1);
-    int length = _mapData.GetLength(0);
-
-    for (int y = 0; y < length; y++)
     {
-        for (int x = 0; x < width; x++)
+        int width = _mapData.GetLength(1);
+        int length = _mapData.GetLength(0);
+
+        for (int y = 0; y < length; y++)
         {
-            int tileCode = _mapData[y, x];
-            Vector3Int tilePozition = new Vector3Int(x, length - 1 - y, 0); 
-
-            // --- HER ZAMAN ZEMİN ÇİZ (Katman 0) ---
-            IGround groundProduct = _activeFactory.CreateGround();
-            if (groundProduct.UnityTile != null) 
-                _groundTilemap.SetTile(tilePozition, groundProduct.UnityTile);
-
-            // --- ÜST KATMANLARI ÇİZ ---
-            if (tileCode == 1) // KALICI DUVAR
+            for (int x = 0; x < width; x++)
             {
-                IWall wallProduct = _activeFactory.CreateWall();
-                _wallTilemap.SetTile(tilePozition, wallProduct.UnityTile);
-            }
-            else if (tileCode == 2) // YIKILABİLİR DUVAR
-            {
-                IBreakableWall breakableProduct = _activeFactory.CreateBreakableWall();
-                _breakableTilemap.SetTile(tilePozition, breakableProduct.UnityTile);
+                int tileCode = _mapData[y, x];
+                Vector3Int tilePozition = new Vector3Int(x, length - 1 - y, 0); 
+                // Tile merkezini hesapla
+                Vector3 worldPos = _groundTilemap.CellToWorld(tilePozition) + new Vector3(0.5f, 0.5f, 0);
+
+                // Zemin her zaman çizilir (Tilemap)
+                IGround groundProduct = _activeFactory.CreateGround();
+                if (groundProduct.UnityTile != null) 
+                    _groundTilemap.SetTile(tilePozition, groundProduct.UnityTile);
+
+                if (tileCode == 1) // Kalıcı Duvar (Tilemap)
+                {
+                    IWall wallProduct = _activeFactory.CreateWall();
+                    _wallTilemap.SetTile(tilePozition, wallProduct.UnityTile);
+                }
+                else if (tileCode == 2) // Yıkılabilir Duvar (Prefab & Network Spawn)
+                {
+                    // Sadece Sunucu prefab oluşturur, otomatik senkronize olur
+                    if (IsServer)
+                    {
+                        SpawnBreakablePrefab(worldPos);
+                    }
+                }
             }
         }
     }
-}
+
+    private void SpawnBreakablePrefab(Vector3 position)
+    {
+        GameObject targetPrefab = _currentTheme switch
+        {
+            Theme.desert => desertBreakablePrefab,
+            Theme.jungle => jungleBreakablePrefab,
+            Theme.city => cityBreakablePrefab,
+            _ => desertBreakablePrefab
+        };
+
+        if (targetPrefab != null)
+        {
+            GameObject brick = Instantiate(targetPrefab, position, Quaternion.identity);
+            brick.GetComponent<NetworkObject>().Spawn();
+        }
+        Debug.Log($"Kutu oluşturuluyor: {position}");
+    }
     
     public void KamerayiOrtala()
     {
-        // ... (Kamera kodunuz burada devam ediyor)
         int genislik = _mapData.GetLength(1);
         int yukseklik = _mapData.GetLength(0);
         float merkezX = (genislik / 2f) - 0.5f;
@@ -93,14 +117,22 @@ public class MapManager : MonoBehaviour
 
     public int GetTileCode(int x, int y)
     {
-        // ... (GetTileCode metodunuz burada devam ediyor)
         int width = _mapData.GetLength(1);
         int length = _mapData.GetLength(0);
-        if (x < 0 || x >= width || y < 0 || y >= length)
-        {
-            return 1; // Engel döndür
-        }
+        if (x < 0 || x >= width || y < 0 || y >= length) return 1;
         int mapY = length - 1 - y; 
         return _mapData[mapY, x];
     }
+
+    public override void OnNetworkSpawn()
+{
+    base.OnNetworkSpawn(); // Temel sınıfı çağırır
+
+    if (IsServer)
+    {
+        Debug.Log("Sunucu yetkisiyle harita çiziliyor...");
+        DrawMap();
+        KamerayiOrtala();
+    }
+}
 }

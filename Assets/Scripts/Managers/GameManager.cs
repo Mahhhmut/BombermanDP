@@ -45,6 +45,6 @@ public class GameManager : MonoBehaviour
         };
 
         if (mapManager != null)
-            mapManager.ChooseThemeCreateMap(selectedStrategy);
+            mapManager.ChooseThemeCreateMap(selectedStrategy, activeTheme);
     }
 }

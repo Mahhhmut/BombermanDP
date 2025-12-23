@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d1514134bc4fbd41bb739b1b9a49231, type: 3}
   m_Name: JungleGround
   m_EditorClassIdentifier: Unity.2D.Tilemap.Extras::UnityEngine.RuleTile
-  m_DefaultSprite: {fileID: -5576140155808393927, guid: 0323ce6d045294f0698ee0e2c2d2d180, type: 3}
+  m_DefaultSprite: {fileID: -8996238665415349365, guid: c6f531a0f70c34d3db742c03e57a98cf, type: 3}
   m_DefaultGameObject: {fileID: 0}
   m_DefaultColliderType: 1
   m_TilingRules: []

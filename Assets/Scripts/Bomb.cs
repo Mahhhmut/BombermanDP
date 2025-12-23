@@ -1,131 +1,127 @@
-// Bomb.cs (GameObject'e eklenecek)
-
 using UnityEngine;
-using UnityEngine.Tilemaps;
+using Unity.Netcode;
+using System.Collections;
 
-public class Bomb : MonoBehaviour
+public class Bomb : NetworkBehaviour
 {
-    // Inspector'dan atanacak ayarlar
     [SerializeField] private float timeToExplode = 3f;
-    [SerializeField] private GameObject explosionPrefab; // Patlama efekti için
-    [SerializeField] private LayerMask solidLayer; // Duvar katmanı (SolidMap)
-
-    [Header("Power-Up Settings")]
-    [SerializeField] private GameObject[] powerUpPrefabs; 
+    [SerializeField] private GameObject explosionPrefab;
+    [SerializeField] private LayerMask solidLayer;
+    [SerializeField] private GameObject[] powerUpPrefabs;
     [Range(0f, 1f)] [SerializeField] private float spawnChance = 0.3f;
 
-    // Player'dan alınacak dinamik değerler
     private int _explosionRange;
-    private Player _ownerPlayer; // Bombayı bırakan oyuncu
-
-    // Timer
-    private float _timer;
+    private Player _ownerPlayer;
 
     public void Initialize(Player owner, int range)
     {
         _ownerPlayer = owner;
         _explosionRange = range;
-        _timer = timeToExplode;
-        
-        
     }
 
-    void Update()
+    public override void OnNetworkSpawn()
     {
-        _timer -= Time.deltaTime;
-        
-        if (_timer <= 0)
-        {
-            Explode();
-        }
+        if (IsServer) StartCoroutine(ExplodeAfterDelay());
+    }
+
+    private IEnumerator ExplodeAfterDelay()
+    {
+        yield return new WaitForSeconds(timeToExplode);
+        Explode();
     }
 
     private void Explode()
     {
-        // 1. Patlama Limitini Geri Ver
-        if (_ownerPlayer != null)
-        {
-            _ownerPlayer.RemoveActiveBombCount(); 
-        }
+        if (!IsServer) return;
+
+        if (_ownerPlayer != null) _ownerPlayer.GetComponent<PlayerPresenter>().RemoveActiveBombCount();
 
         Vector3 centerPos = transform.position;
+        SpawnExplosionEffect(centerPos);
         CheckDamage(centerPos);
-        // 2. Patlama Merkezi (Center) Efektini Yarat
-        Instantiate(explosionPrefab, centerPos, Quaternion.identity);
 
-        // 3. Patlamayı 4 Ana Yöne Yay
-        CheckExplosionDirection(centerPos, Vector2.up);
-        CheckExplosionDirection(centerPos, Vector2.down);
-        CheckExplosionDirection(centerPos, Vector2.right);
-        CheckExplosionDirection(centerPos, Vector2.left);
+        CheckDirection(centerPos, Vector2.up);
+        CheckDirection(centerPos, Vector2.down);
+        CheckDirection(centerPos, Vector2.right);
+        CheckDirection(centerPos, Vector2.left);
 
-        
-
-        // Bombayı yok et
-        Destroy(gameObject);
+        GetComponent<NetworkObject>().Despawn();
     }
 
-    private void CheckExplosionDirection(Vector3 startPos, Vector2 direction)
+    private void CheckDirection(Vector3 startPos, Vector2 direction)
     {
         for (int i = 1; i <= _explosionRange; i++)
         {
             Vector3 targetPos = startPos + (Vector3)direction * i;
-            CheckDamage(targetPos);
-
-            // Işın mesafesini tam i yaparak tam o kareye bakmasını sağlıyoruz
             RaycastHit2D hit = Physics2D.Raycast(startPos, direction, i, solidLayer);
 
             if (hit.collider != null)
             {
-                // Eğer "Breakable" layer'ına (Kırılabilir Duvar Tilemap'i) çarptıysak
-                if (hit.collider.gameObject.layer == LayerMask.NameToLayer("BreakableMap"))
+                if (hit.collider.CompareTag("Breakable"))
                 {
-                    Tilemap tilemap = hit.collider.GetComponent<Tilemap>();
-                    if (tilemap != null)
-                    {
-                        // Duvarın tam içindeki koordinatı bul ve sil
-                        Vector3Int tilePos = tilemap.WorldToCell(targetPos); 
-                        tilemap.SetTile(tilePos, null); // Üstteki duvar silinir, alt katmandaki zemin görünür.
-
-                        TrySpawnPowerUp(targetPos);
-                        
-                        // Duvarın patlama anını görselleştir
-                        Instantiate(explosionPrefab, targetPos, Quaternion.identity);
-                    }
+                    // Duvarı ağ üzerinde yok et
+                    var netObj = hit.collider.GetComponent<NetworkObject>();
+                    if (netObj != null) netObj.Despawn();
+                    
+                    TrySpawnPowerUp(targetPos);
+                    SpawnExplosionEffect(targetPos);
                 }
-                // İster kırılsın ister kırılmasın, bir engele çarptığı için döngüden çık (Patlama durur)
-                return; 
+                return; // Engele çarptı, patlama durur
             }
-
-            // Yol boşsa patlama görselini koy
-            Instantiate(explosionPrefab, targetPos, Quaternion.identity);
+            SpawnExplosionEffect(targetPos);
+            CheckDamage(targetPos);
         }
     }
 
-    private void CheckDamage(Vector3 position)
+    private void SpawnExplosionEffect(Vector3 pos)
     {
-        // Belirlenen pozisyonda (karede) Player veya Enemy katmanında biri var mı?
-        Collider2D hit = Physics2D.OverlapBox(position, Vector2.one * 0.8f, 0f, LayerMask.GetMask("Player", "Enemy"));
-
-        if (hit != null)
-        {
-            Debug.Log($"<color=red>HASAR:</color> {hit.name} patlamada kaldı!");
-            // İleride: hit.GetComponent<IDamageable>()?.TakeDamage();
-        }
+        GameObject fx = Instantiate(explosionPrefab, pos, Quaternion.identity);
+        fx.GetComponent<NetworkObject>().Spawn();
     }
 
-    private void TrySpawnPowerUp(Vector3 position)
-    {
-        // 1. Şans kontrolü
-        if (Random.value <= spawnChance && powerUpPrefabs.Length > 0)
-        {
-            // 2. Rastgele bir Power-up seç
-            int randomIndex = Random.Range(0, powerUpPrefabs.Length);
-            
-            // 3. Oluştur
-            Instantiate(powerUpPrefabs[randomIndex], position, Quaternion.identity);
-        }
-    }
-
+    private void CheckDamage(Vector3 pos)
+{
+    // Patlama alanındaki Player ve Enemy katmanlarını kontrol et
+    Collider2D hit = Physics2D.OverlapBox(pos, Vector2.one * 0.8f, 0f, LayerMask.GetMask("Player", "Enemy"));
     
+    if (hit != null)
+    {
+        if (hit.CompareTag("Enemy"))
+        {
+            // Düşmanı ağ üzerinde yok et
+            var netObj = hit.GetComponent<NetworkObject>();
+            if (netObj != null) netObj.Despawn(); 
+            else Destroy(hit.gameObject);
+            
+            Debug.Log("Düşman patlatıldı!");
+        }
+        else if (hit.CompareTag("Player"))
+        {
+            // İleride buraya oyuncu can azaltma veya ölme kodu gelecek
+            Debug.Log("Oyuncu patlamada kaldı!");
+        }
+    }
+}
+
+    private void TrySpawnPowerUp(Vector3 pos)
+{
+    // Sadece sunucu spawn yapabilir ve liste boş olmamalı
+    if (!IsServer || powerUpPrefabs == null || powerUpPrefabs.Length == 0) return;
+
+    if (Random.value <= spawnChance)
+    {
+        int index = Random.Range(0, powerUpPrefabs.Length);
+        
+        // Seçilen prefab null mı kontrol et
+        if (powerUpPrefabs[index] == null) return;
+
+        GameObject pu = Instantiate(powerUpPrefabs[index], pos, Quaternion.identity);
+        
+        // Power-up üzerinde NetworkObject var mı kontrol et
+        if (pu.TryGetComponent<NetworkObject>(out var netObj))
+        {
+            netObj.Spawn();
+        }
+    }
+}
 }

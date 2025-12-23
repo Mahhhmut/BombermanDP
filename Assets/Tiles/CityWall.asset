@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d1514134bc4fbd41bb739b1b9a49231, type: 3}
   m_Name: CityWall
   m_EditorClassIdentifier: Unity.2D.Tilemap.Extras::UnityEngine.RuleTile
-  m_DefaultSprite: {fileID: -5706969015302517901, guid: 16106e5ae151e49bf802ef2ed2f69c02, type: 3}
+  m_DefaultSprite: {fileID: 8513871630655858340, guid: aa325a635beab461d8433af311ad6472, type: 3}
   m_DefaultGameObject: {fileID: 0}
   m_DefaultColliderType: 1
   m_TilingRules: []

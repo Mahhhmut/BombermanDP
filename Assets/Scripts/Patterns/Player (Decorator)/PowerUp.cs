@@ -1,38 +1,43 @@
 using UnityEngine;
+using Unity.Netcode;
 
 public enum PowerUpType { ExtraRange, ExtraBomb, SpeedBoost }
 
-public class PowerUp : MonoBehaviour
+public class PowerUp : NetworkBehaviour
 {
     public PowerUpType type;
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        // Sadece Server temasları işler ve objeyi ağdan siler
+        if (!IsServer) return;
+
         if (other.CompareTag("Player"))
         {
             ApplyPowerUp(other.gameObject);
-            Destroy(gameObject);
+            // Objeyi ağdaki tüm clientlardan sil
+            GetComponent<NetworkObject>().Despawn();
         }
     }
 
-    private void ApplyPowerUp(GameObject player)
+    private void ApplyPowerUp(GameObject playerObj)
     {
-        Player playerScript = player.GetComponent<Player>();
-        if (playerScript == null) return;
+        var presenter = playerObj.GetComponent<PlayerPresenter>();
+        if (presenter == null) return;
 
         switch (type)
         {
             case PowerUpType.ExtraRange:
-                playerScript._currentAbility = new BombPowerDecorator(playerScript._currentAbility);
+                presenter._currentAbility = new BombPowerDecorator(presenter._currentAbility);
                 break;
             case PowerUpType.ExtraBomb:
-                playerScript._currentAbility = new BombCountDecorator(playerScript._currentAbility);
+                presenter._currentAbility = new BombCountDecorator(presenter._currentAbility);
                 break;
             case PowerUpType.SpeedBoost:
-                // Dekoratör oluşturmak yerine Player içindeki süreli metodu çağırıyoruz
-                playerScript.ApplySpeedBoost(10f); 
+                // Presenter üzerindeki ServerRpc'yi çağırarak süreli hızı başlat
+                presenter.ApplySpeedBoostServerRpc(10f); 
                 break;
         }
-        Debug.Log($"{type} uygulandı!");
+        Debug.Log($"{type} sunucu tarafından {playerObj.name} oyuncusuna uygulandı!");
     }
 }

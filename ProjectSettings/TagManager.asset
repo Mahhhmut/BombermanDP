@@ -5,6 +5,9 @@ TagManager:
   serializedVersion: 3
   tags:
   - Enemies
+  - Enemy
+  - Undefined
+  - Breakable
   layers:
   - Default
   - TransparentFX
