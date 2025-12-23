@@ -38,12 +38,16 @@ public class Player : MonoBehaviour
 
     void FixedUpdate()
     {
-        float speed = _currentAbility.MovementSpeed;
-        float dist = speed * Time.fixedDeltaTime;
-
-        if (CanMove(_moveDirection, dist))
+        if (_moveDirection != Vector2.zero)
         {
-            _currentAbility.Move(_rb, _moveDirection);
+            float speed = _currentAbility.MovementSpeed;
+            float dist = speed * Time.fixedDeltaTime;
+
+            if (CanMove(_moveDirection, dist))
+            {
+                // Decorator zincirindeki Move metodunu çağırıyoruz
+                _currentAbility.Move(_rb, _moveDirection);
+            }
         }
     }
 
@@ -90,5 +94,18 @@ public class Player : MonoBehaviour
     {
         _currentAbility = newAbility;
         Debug.Log($"Yetenek Güncellendi! Hız: {_currentAbility.MovementSpeed}, Menzil: {_currentAbility.BombRange}, Bomba: {_currentAbility.BombCount}");
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        // Düşmanın Tag'ının "Enemy" olduğundan emin ol
+        if (collision.gameObject.CompareTag("Enemies"))
+        {
+            Debug.Log("Öldün!");
+            // Sahneyi yeniden başlat
+            UnityEngine.SceneManagement.SceneManager.LoadScene(
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
+            );
+        }
     }
 }

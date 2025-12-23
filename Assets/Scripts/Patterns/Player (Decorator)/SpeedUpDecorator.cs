@@ -2,13 +2,16 @@ using UnityEngine;
 
 public class SpeedUpDecorator : PlayerAbilityDecorator
 {
-    private const float SPEED_INCREASE = 1.5f;
+    public SpeedUpDecorator(IPlayerAbility decoratedAbility) : base(decoratedAbility) { }
 
-    public SpeedUpDecorator(IPlayerAbility decoratedAbility) : base(decoratedAbility)
+    // Üst sınıftaki (veya bir önceki dekoratördeki) hızı 2 ile çarpar
+    public override float MovementSpeed => _decoratedAbility.MovementSpeed * 2f;
+
+    public override void Move(Rigidbody2D rb, Vector2 direction)
     {
-        
+        // Hareket ederken kendi (güncel) MovementSpeed değerini kullanır
+        float distance = MovementSpeed * Time.fixedDeltaTime;
+        Vector2 targetPos = rb.position + direction * distance;
+        rb.MovePosition(targetPos);
     }
-    public override float MovementSpeed => _decoratedAbility.MovementSpeed + SPEED_INCREASE;
-
-    // Diğer tüm yetenekler (Bomba Sayısı, Menzil, vb.) otomatik olarak zincirin bir önceki halkasına iletilir.
 }

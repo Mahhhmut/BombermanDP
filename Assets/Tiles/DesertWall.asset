@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d1514134bc4fbd41bb739b1b9a49231, type: 3}
   m_Name: DesertWall
   m_EditorClassIdentifier: Unity.2D.Tilemap.Extras::UnityEngine.RuleTile
-  m_DefaultSprite: {fileID: -7259721464142561641, guid: f0dfb79ff1a0244a48d32135e5538de2, type: 3}
+  m_DefaultSprite: {fileID: -1685061418996166144, guid: 20e3024e64af34a3b81da1d2a2c14305, type: 3}
   m_DefaultGameObject: {fileID: 0}
   m_DefaultColliderType: 1
   m_TilingRules: []

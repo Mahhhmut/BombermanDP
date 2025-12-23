@@ -8,6 +8,7 @@ public class BaseAbility : IPlayerAbility
 
     public void Move(Rigidbody2D rb, Vector2 direction)
     {
+        float speed = MovementSpeed;
         float distance = MovementSpeed * Time.fixedDeltaTime;
         Vector2 targetPos = rb.position + direction * distance;
         rb.MovePosition(targetPos);

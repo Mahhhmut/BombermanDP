@@ -26,18 +26,19 @@ public class MenuManager : MonoBehaviour
     // Alt butonlar (City, Jungle, Desert) buna bağlı olacak
     public void SelectTheme(string themeName)
     {
-        // String veriyi Enum tipine güvenli bir şekilde çeviriyoruz
         if (System.Enum.TryParse(themeName, true, out Theme selected))
         {
             GameManager.Instance.SetTheme(selected);
             
-            // "GameScene" sahnesine geçiş yap
-            SceneManager.LoadScene("MainScene");
+            // Sahneye geçmek yerine sadece alt menüyü kapatıyoruz
+            if (themesSubMenu != null) themesSubMenu.SetActive(false);
+            
+            Debug.Log($"Tema seçildi: {selected}. Oyunu başlatmak için Start'a basın.");
         }
-        else
-        {
-            Debug.LogError($"Hatalı tema adı: {themeName}");
-        }
+    }
+    public void StartGame()
+    {
+        SceneManager.LoadScene("MainScene");
     }
 
     // Gelecekte eklenecek Multiplayer butonu için örnek
