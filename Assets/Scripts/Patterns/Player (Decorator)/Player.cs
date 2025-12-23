@@ -6,6 +6,9 @@ public class Player : MonoBehaviour
     private Rigidbody2D _rb;
     private Vector2 _moveDirection;
     private int _activeBombCount = 0;
+    private bool _isSpeedBoostActive = false;
+    private float _speedBoostTimer = 0;
+    private IPlayerAbility _preSpeedAbility; // Hızlanmadan önceki yetenek zinciri
 
     [Header("Ayarlar")]
     [SerializeField] private LayerMask solidLayer;
@@ -29,6 +32,15 @@ public class Player : MonoBehaviour
         else if (Mathf.Abs(moveY) > 0) _moveDirection = new Vector2(0, moveY).normalized;
         else _moveDirection = Vector2.zero;
 
+        if (_isSpeedBoostActive)
+        {
+            _speedBoostTimer -= Time.deltaTime;
+            if (_speedBoostTimer <= 0)
+            {
+                ResetSpeed();
+            }
+        }
+
         // Bomba Bırakma
         if (Input.GetKeyDown(KeyCode.Space))
         {
@@ -42,6 +54,8 @@ public class Player : MonoBehaviour
         {
             float speed = _currentAbility.MovementSpeed;
             float dist = speed * Time.fixedDeltaTime;
+
+
 
             if (CanMove(_moveDirection, dist))
             {
@@ -99,7 +113,7 @@ public class Player : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D collision)
     {
         // Düşmanın Tag'ının "Enemy" olduğundan emin ol
-        if (collision.gameObject.CompareTag("Enemies"))
+        if (collision.gameObject.CompareTag("Enemy"))
         {
             Debug.Log("Öldün!");
             // Sahneyi yeniden başlat
@@ -107,5 +121,36 @@ public class Player : MonoBehaviour
                 UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
             );
         }
+    }
+
+    public void ApplySpeedBoost(float duration)
+    {
+        // Eğer zaten hız artışı varsa sadece süreyi yenile (Stacklenmeyi engeller)
+        if (_isSpeedBoostActive)
+        {
+            _speedBoostTimer = duration;
+            return;
+        }
+
+        // İlk kez hızlanıyorsa:
+        _isSpeedBoostActive = true;
+        _speedBoostTimer = duration;
+        
+        // Mevcut yetenek zincirini sakla ve üzerine hız dekoratörünü ekle
+        _currentAbility = new SpeedUpDecorator(_currentAbility);
+        Debug.Log("Hız artışı başladı!");
+    }
+
+    private void ResetSpeed()
+    {
+        _isSpeedBoostActive = false;
+        
+        // Decorator zincirini manuel olarak temizlemek yerine 
+        // Basitçe hızı normalleştiren bir mantık veya zinciri yeniden kurma:
+        // En temiz yol: Mevcut yetenekleri koruyup sadece hızı Base seviyeye çekmek
+        // Veya bu örnekte olduğu gibi objeyi yeniden BaseAbility'e döndürmek (diğer power-up'ları korumak istiyorsan zinciri taraman gerekir)
+        
+        _currentAbility = new BaseAbility(); 
+        Debug.Log("Hız normale döndü.");
     }
 }

@@ -1,17 +1,15 @@
 using UnityEngine;
 
-public enum PowerUpType {ExtraRange, ExtraBomb, SpeedBoost}
+public enum PowerUpType { ExtraRange, ExtraBomb, SpeedBoost }
+
 public class PowerUp : MonoBehaviour
 {
-
     public PowerUpType type;
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        Debug.Log("Temas var: " +other.name);
         if (other.CompareTag("Player"))
         {
-            //player a güç ver
             ApplyPowerUp(other.gameObject);
             Destroy(gameObject);
         }
@@ -22,21 +20,19 @@ public class PowerUp : MonoBehaviour
         Player playerScript = player.GetComponent<Player>();
         if (playerScript == null) return;
 
-
         switch (type)
-    {
-        case PowerUpType.ExtraRange:
-            playerScript._currentAbility = new BombPowerDecorator(playerScript._currentAbility);
-            break;
-        case PowerUpType.ExtraBomb:
-            playerScript._currentAbility = new BombCountDecorator(playerScript._currentAbility);
-            break;
-        case PowerUpType.SpeedBoost:
-            playerScript._currentAbility = new SpeedUpDecorator(playerScript._currentAbility);
-            break;
-    }
+        {
+            case PowerUpType.ExtraRange:
+                playerScript._currentAbility = new BombPowerDecorator(playerScript._currentAbility);
+                break;
+            case PowerUpType.ExtraBomb:
+                playerScript._currentAbility = new BombCountDecorator(playerScript._currentAbility);
+                break;
+            case PowerUpType.SpeedBoost:
+                // Dekoratör oluşturmak yerine Player içindeki süreli metodu çağırıyoruz
+                playerScript.ApplySpeedBoost(10f); 
+                break;
+        }
         Debug.Log($"{type} uygulandı!");
     }
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    
 }
