@@ -1,49 +1,40 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Unity.Netcode; // Bunu eklemeyi unutma
 
 public class MenuManager : MonoBehaviour
 {
-    [Header("UI Panelleri")]
-    [SerializeField] private GameObject themesSubMenu; // Inspector'dan 'ThemesSubMenu' panelini buraya sürükle
+    [SerializeField] private GameObject themesSubMenu;
 
-    void Start()
+    // "Start" butonu yerine artık bu olacak (Host hem kurar hem girer)
+    public void StartGameAsHost()
     {
-        // Başlangıçta alt menünün kapalı olduğundan emin olalım
-        if (themesSubMenu != null) 
-            themesSubMenu.SetActive(false);
+        // Önemli: Önce sahneyi yükle, sonra host başlat
+        // Veya NetworkManager.Singleton.SceneManager.LoadScene kullan
+        NetworkManager.Singleton.StartHost();
+        
+        // Host sahneyi yüklediğinde, bağlanan client'lar otomatik olarak o sahneye çekilir
+        NetworkManager.Singleton.SceneManager.LoadScene("MainScene", LoadSceneMode.Single);
     }
 
-    // "Theme" ana butonuna basınca çalışır
-    public void ToggleThemeMenu()
+    // "Join" butonu için
+    public void JoinGameAsClient()
     {
-        if (themesSubMenu != null)
-        {
-            bool isActive = themesSubMenu.activeSelf;
-            themesSubMenu.SetActive(!isActive);
-        }
+        // Client sadece bağlanır, server hangi sahnedeyse oraya otomatik gider
+        NetworkManager.Singleton.StartClient();
     }
 
-    // Alt butonlar (City, Jungle, Desert) buna bağlı olacak
     public void SelectTheme(string themeName)
     {
         if (System.Enum.TryParse(themeName, true, out Theme selected))
         {
             GameManager.Instance.SetTheme(selected);
-            
-            // Sahneye geçmek yerine sadece alt menüyü kapatıyoruz
             if (themesSubMenu != null) themesSubMenu.SetActive(false);
-            
-            Debug.Log($"Tema seçildi: {selected}. Oyunu başlatmak için Start'a basın.");
         }
     }
-    public void StartGame()
-    {
-        SceneManager.LoadScene("MainScene");
-    }
 
-    // Gelecekte eklenecek Multiplayer butonu için örnek
-    public void OpenMultiplayerMenu()
+    public void ToggleThemeMenu()
     {
-        Debug.Log("Multiplayer menüsü yakında...");
+        if (themesSubMenu != null) themesSubMenu.SetActive(!themesSubMenu.activeSelf);
     }
 }

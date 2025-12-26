@@ -25,11 +25,13 @@ public class Player : NetworkBehaviour
         else if (Mathf.Abs(moveY) > 0) _moveDirection = new Vector2(0, moveY).normalized;
         else _moveDirection = Vector2.zero;
 
+        _presenter.GetView().UpdateAnimation(_moveDirection);
         // Bomba Bırakma
         if (Input.GetKeyDown(KeyCode.Space))
         {
             _presenter.RequestPlaceBomb();
         }
+        
     }
 
     void FixedUpdate()

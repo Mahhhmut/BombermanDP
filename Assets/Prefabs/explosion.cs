@@ -1,12 +1,24 @@
+using Unity.Netcode;
 using UnityEngine;
 
-public class explosion : MonoBehaviour
+public class NetworkDestroyer : NetworkBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    [SerializeField] private float lifeTime = 1f;
+
+    public override void OnNetworkSpawn()
     {
-        Destroy(gameObject, 0.5f);
+        // Sadece sunucu zamanlayıcıyı başlatır ve objeyi ağdan siler
+        if (IsServer)
+        {
+            Invoke(nameof(DespawnObject), lifeTime);
+        }
     }
 
-    
+    private void DespawnObject()
+    {
+        if (IsSpawned)
+        {
+            GetComponent<NetworkObject>().Despawn();
+        }
+    }
 }

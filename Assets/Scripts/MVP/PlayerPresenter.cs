@@ -91,5 +91,7 @@ public class PlayerPresenter : NetworkBehaviour
         _currentAbility = new BaseAbility();
     }
 
+    public PlayerView GetView() => view;
+
     public void RemoveActiveBombCount() => _activeBombCount--;
 }

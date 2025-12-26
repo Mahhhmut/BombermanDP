@@ -16,6 +16,8 @@ public class MapManager : NetworkBehaviour
     [SerializeField] private GameObject jungleBreakablePrefab;
     [SerializeField] private GameObject cityBreakablePrefab;
 
+    private NetworkVariable<Theme> _syncTheme = new NetworkVariable<Theme>(Theme.desert);
+
     private IMapFactory _activeFactory;
     private Theme _currentTheme;
 
@@ -125,14 +127,26 @@ public class MapManager : NetworkBehaviour
     }
 
     public override void OnNetworkSpawn()
-{
-    base.OnNetworkSpawn(); // Temel sınıfı çağırır
-
-    if (IsServer)
     {
-        Debug.Log("Sunucu yetkisiyle harita çiziliyor...");
-        DrawMap();
-        KamerayiOrtala();
+        base.OnNetworkSpawn(); // Temel sınıfı çağırır
+        
+
+        _syncTheme.OnValueChanged += (oldTheme, newTheme) => {
+        UpdateThemeAndDraw(newTheme);
+    };
+
+        if (IsServer)
+        {
+            Debug.Log("Sunucu yetkisiyle harita çiziliyor...");
+            DrawMap();
+            KamerayiOrtala();
+        }
     }
-}
+
+    private void UpdateThemeAndDraw(Theme newTheme)
+    {
+        // Burada Factory'yi yeni temaya göre güncelle ve Tilemap'leri boya
+        // Bu metod hem Host hem Client tarafında yerel çalışır (Tilemap senkronu için)
+    }
+    
 }

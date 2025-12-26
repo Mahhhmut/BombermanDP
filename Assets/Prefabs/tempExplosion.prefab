@@ -10,8 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 3946678068122459379}
   - component: {fileID: 8638337058568272088}
-  - component: {fileID: 8035371067266495086}
   - component: {fileID: 615666755157930872}
+  - component: {fileID: 8035371067266495086}
   m_Layer: 9
   m_Name: tempExplosion
   m_TagString: Untagged
@@ -92,18 +92,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &8035371067266495086
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8736246242853146235}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77a110bffe8bf421097d7170d6de5a36, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::explosion
 --- !u!114 &615666755157930872
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -116,7 +104,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 0
+  GlobalObjectIdHash: 589470701
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -129,3 +117,17 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &8035371067266495086
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8736246242853146235}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77a110bffe8bf421097d7170d6de5a36, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::explosion
+  ShowTopMostFoldoutHeaderGroup: 1
+  lifeTime: 1
