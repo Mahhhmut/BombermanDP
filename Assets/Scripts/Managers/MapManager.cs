@@ -127,26 +127,45 @@ public class MapManager : NetworkBehaviour
     }
 
     public override void OnNetworkSpawn()
-    {
-        base.OnNetworkSpawn(); // Temel sınıfı çağırır
-        
-
-        _syncTheme.OnValueChanged += (oldTheme, newTheme) => {
-        UpdateThemeAndDraw(newTheme);
+{
+    // Tema değiştiğinde hem Host hem Client bu metodu çalıştırır
+    _syncTheme.OnValueChanged += (oldTheme, newTheme) => {
+        ApplySyncedTheme(newTheme);
     };
 
-        if (IsServer)
-        {
-            Debug.Log("Sunucu yetkisiyle harita çiziliyor...");
-            DrawMap();
-            KamerayiOrtala();
-        }
+    if (IsServer)
+    {
+        // Host, GameManager'daki aktif temayı NetworkVariable'a yazar
+        _syncTheme.Value = GameManager.Instance.activeTheme;
+        DrawMap();
+        KamerayiOrtala();
     }
+    else
+    {
+        // Client sonradan bağlandığında güncel temayı uygular
+        ApplySyncedTheme(_syncTheme.Value);
+    }
+}
 
     private void UpdateThemeAndDraw(Theme newTheme)
     {
         // Burada Factory'yi yeni temaya göre güncelle ve Tilemap'leri boya
         // Bu metod hem Host hem Client tarafında yerel çalışır (Tilemap senkronu için)
     }
+
     
+    private void ApplySyncedTheme(Theme newTheme)
+{
+    // Client'ın yerel seçimi yerine sunucudan gelen temayı kullan
+    IMapThemeStrategy strategy = newTheme switch
+    {
+        Theme.city => new CityStrategy(),
+        Theme.jungle => new JungleStrategy(),
+        Theme.desert => new DesertStrategy(),
+        _ => new CityStrategy()
+    };
+
+    // Haritayı sunucudan gelen strateji ile tekrar çiz
+    ChooseThemeCreateMap(strategy, newTheme);
+}
 }

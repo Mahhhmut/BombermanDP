@@ -6,6 +6,9 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : NetworkBehaviour
 {
+    [Header("Spawn Settings")]
+[SerializeField] private GameObject enemyPrefab; // Düşman prefabı
+[SerializeField] private Vector3 enemySpawnPos = new Vector3(1.75f, 11.48f, 0); // Koordinat
     public static GameManager Instance { get; private set; }
 
     private MapManager mapManager; 
@@ -35,7 +38,7 @@ public void NotifyGameOverClientRpc(string message)
 
 private IEnumerator RespawnPlayersRoutine()
 {
-    // 1. Önce sahnedeki tüm eski oyuncu objelerini bul ve yok et
+    // 1. Eski Player ve Enemy'leri temizle (Despawn)
     PlayerPresenter[] oldPlayers = FindObjectsByType<PlayerPresenter>(FindObjectsSortMode.None);
     foreach (var p in oldPlayers)
     {
@@ -43,21 +46,33 @@ private IEnumerator RespawnPlayersRoutine()
             p.NetworkObject.Despawn();
     }
 
-    // Kısa bir bekleme (Senkronizasyon için)
+    // Sahnedeki eski düşmanları da bul ve temizle
+    GameObject[] oldEnemies = GameObject.FindGameObjectsWithTag("Enemy");
+    foreach (var e in oldEnemies)
+    {
+        var netObj = e.GetComponent<NetworkObject>();
+        if (netObj != null && netObj.IsSpawned) netObj.Despawn();
+    }
+
     yield return new WaitForNextFrameUnit();
 
-    // 2. Yeni koordinatlara göre spawn et
+    // 2. Oyuncuları doğurt
     foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
     {
-        // Host ise (ID 0), Client ise diğer koordinat
         Vector3 spawnPos = (client.ClientId == 0) 
             ? new Vector3(1.52f, 1.52f, 0) 
             : new Vector3(13.5f, 11.5f, 0);
 
         GameObject playerObj = Instantiate(NetworkManager.Singleton.NetworkConfig.PlayerPrefab, spawnPos, Quaternion.identity);
-        
-        // Oyuncuyu ilgili ID ile ağda doğurt
         playerObj.GetComponent<NetworkObject>().SpawnAsPlayerObject(client.ClientId);
+    }
+
+    // 3. Düşmanı belirlenen koordinatta doğurt
+    if (enemyPrefab != null)
+    {
+        Vector3 enemyPos = new Vector3(1.75f, 11.48f, 0);
+        GameObject enemyObj = Instantiate(enemyPrefab, enemyPos, Quaternion.identity);
+        enemyObj.GetComponent<NetworkObject>().Spawn();
     }
 }
 
@@ -98,17 +113,29 @@ private IEnumerator RespawnPlayersRoutine()
     }
 
     private IEnumerator ResetGameRoutine()
-{
-    // 1. Sahneyi herkes için yeniden yükle
-    // Not: Bu satır tüm bağlı client'ları MainScene'e taşır.
-    NetworkManager.Singleton.SceneManager.LoadScene("MainScene", UnityEngine.SceneManagement.LoadSceneMode.Single);
+    {
+        // 1. Sahneyi herkes için yeniden yükle
+        //  tüm bağlı client'ları MainScene'e taşır
+        NetworkManager.Singleton.SceneManager.LoadScene("MainScene", UnityEngine.SceneManagement.LoadSceneMode.Single);
 
-    // 2. Sahne yüklenene kadar bekle (Opsiyonel ama güvenlidir)
-    yield return new WaitForSeconds(0.5f);
+        // 2. Sahne yüklenene kadar bekle
+        yield return new WaitForSeconds(0.5f);
 
-    // 3. Oyuncuları spawn etme işlemini başlat (Önceki mesajdaki RespawnPlayersRoutine)
-    StartCoroutine(RespawnPlayersRoutine());
-}
+        // 3. Oyuncuları spawn etme işlemini başlat (Önceki mesajdaki RespawnPlayersRoutine)
+        StartCoroutine(RespawnPlayersRoutine());
+    }
+
+    private void ClearOldEntities()
+    {
+        // Sahnedeki tüm NetworkObject'leri bul ve sil
+        var allNetworkObjects = FindObjectsByType<NetworkObject>(FindObjectsSortMode.None);
+        foreach (var netObj in allNetworkObjects)
+        {
+            // GameManager'ın kendisini silmemesi için kontrol
+            if (netObj != NetworkObject && netObj.IsSpawned) 
+                netObj.Despawn(true);
+        }
+    }
 
     
 }

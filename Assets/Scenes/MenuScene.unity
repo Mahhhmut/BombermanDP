@@ -1766,6 +1766,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   ShowTopMostFoldoutHeaderGroup: 1
+  enemyPrefab: {fileID: 1120948225872558217, guid: 6bb8ccf0631b749b9bb44b52ab3bfc4c, type: 3}
 --- !u!4 &1242407280
 Transform:
   m_ObjectHideFlags: 0

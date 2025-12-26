@@ -81,12 +81,22 @@ public class Bomb : NetworkBehaviour
 
     private void CheckDamage(Vector3 pos)
     {
+        // Patlama alanındaki Player ve Enemy katmanlarını kontrol et
         Collider2D hit = Physics2D.OverlapBox(pos, Vector2.one * 0.8f, 0f, LayerMask.GetMask("Player", "Enemy"));
         
         if (hit != null && IsServer)
         {
-            if (hit.CompareTag("Player"))
+            if (hit.CompareTag("Enemy"))
             {
+                // Düşmanı ağ üzerinde tamamen yok et
+                var netObj = hit.GetComponent<NetworkObject>();
+                if (netObj != null) netObj.Despawn(true); 
+                
+                Debug.Log("Düşman bombayla patlatıldı!");
+            }
+            else if (hit.CompareTag("Player"))
+            {
+                // Oyuncu ölme kuralını çalıştır
                 hit.GetComponent<PlayerPresenter>().DieServerRpc();
             }
         }
