@@ -148,6 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 689894b6e98764b74a33798bb5061c17, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!4 &168826345
 Transform:
   m_ObjectHideFlags: 0
@@ -1044,7 +1045,7 @@ Rigidbody2D:
   m_GameObject: {fileID: 1584299995}
   m_BodyType: 1
   m_Simulated: 1
-  m_UseFullKinematicContacts: 0
+  m_UseFullKinematicContacts: 1
   m_UseAutoMass: 0
   m_Mass: 1
   m_LinearDamping: 0

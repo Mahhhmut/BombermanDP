@@ -47,4 +47,16 @@ public class Player : NetworkBehaviour
             _presenter._currentAbility.Move(_rb, _moveDirection);
         }
     }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+{
+    // Çarpmayı sadece Server algılar
+    if (!IsServer) return;
+
+    if (collision.gameObject.CompareTag("Enemy"))
+    {
+        // Mesaj göndermeye gerek yok, Presenter içeride halledecek
+        _presenter.DieServerRpc();
+    }
+}
 }

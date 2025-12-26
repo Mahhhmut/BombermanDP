@@ -80,48 +80,39 @@ public class Bomb : NetworkBehaviour
     }
 
     private void CheckDamage(Vector3 pos)
-{
-    // Patlama alanındaki Player ve Enemy katmanlarını kontrol et
-    Collider2D hit = Physics2D.OverlapBox(pos, Vector2.one * 0.8f, 0f, LayerMask.GetMask("Player", "Enemy"));
-    
-    if (hit != null)
     {
-        if (hit.CompareTag("Enemy"))
+        Collider2D hit = Physics2D.OverlapBox(pos, Vector2.one * 0.8f, 0f, LayerMask.GetMask("Player", "Enemy"));
+        
+        if (hit != null && IsServer)
         {
-            // Düşmanı ağ üzerinde yok et
-            var netObj = hit.GetComponent<NetworkObject>();
-            if (netObj != null) netObj.Despawn(); 
-            else Destroy(hit.gameObject);
-            
-            Debug.Log("Düşman patlatıldı!");
-        }
-        else if (hit.CompareTag("Player"))
-        {
-            // İleride buraya oyuncu can azaltma veya ölme kodu gelecek
-            Debug.Log("Oyuncu patlamada kaldı!");
+            if (hit.CompareTag("Player"))
+            {
+                hit.GetComponent<PlayerPresenter>().DieServerRpc();
+            }
         }
     }
-}
 
     private void TrySpawnPowerUp(Vector3 pos)
-{
-    // Sadece sunucu spawn yapabilir ve liste boş olmamalı
-    if (!IsServer || powerUpPrefabs == null || powerUpPrefabs.Length == 0) return;
-
-    if (Random.value <= spawnChance)
     {
-        int index = Random.Range(0, powerUpPrefabs.Length);
-        
-        // Seçilen prefab null mı kontrol et
-        if (powerUpPrefabs[index] == null) return;
+        // Sadece sunucu spawn yapabilir ve liste boş olmamalı
+        if (!IsServer || powerUpPrefabs == null || powerUpPrefabs.Length == 0) return;
 
-        GameObject pu = Instantiate(powerUpPrefabs[index], pos, Quaternion.identity);
-        
-        // Power-up üzerinde NetworkObject var mı kontrol et
-        if (pu.TryGetComponent<NetworkObject>(out var netObj))
+        if (Random.value <= spawnChance)
         {
-            netObj.Spawn();
+            int index = Random.Range(0, powerUpPrefabs.Length);
+            
+            // Seçilen prefab null mı kontrol et
+            if (powerUpPrefabs[index] == null) return;
+
+            GameObject pu = Instantiate(powerUpPrefabs[index], pos, Quaternion.identity);
+            
+            // Power-up üzerinde NetworkObject var mı kontrol et
+            if (pu.TryGetComponent<NetworkObject>(out var netObj))
+            {
+                netObj.Spawn();
+            }
         }
     }
-}
+
+    
 }

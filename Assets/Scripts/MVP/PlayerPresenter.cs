@@ -91,7 +91,21 @@ public class PlayerPresenter : NetworkBehaviour
         _currentAbility = new BaseAbility();
     }
 
+    
+
     public PlayerView GetView() => view;
 
     public void RemoveActiveBombCount() => _activeBombCount--;
+
+    [ServerRpc(RequireOwnership = false)]
+public void DieServerRpc()
+{
+    if (!IsSpawned) return;
+
+    // Eğer ölen karakter Client (Owner) ise Host kazanmıştır.
+    string message = IsOwner ? "CLIENT WINS!" : "HOST WINS!";
+    
+    GameManager.Instance.NotifyGameOverClientRpc(message);
+    GetComponent<NetworkObject>().Despawn();
+}
 }
