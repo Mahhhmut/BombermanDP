@@ -12,6 +12,5 @@ public class Explosion : MonoBehaviour
         Destroy(gameObject, duration);
     }
 
-    // İLERİDE EKLENECEK: Player/Enemy ile çarpışma (Trigger) kontrolü
-    // void OnTriggerEnter2D(Collider2D other) { ... } 
+    
 }

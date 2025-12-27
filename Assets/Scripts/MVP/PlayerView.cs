@@ -15,8 +15,8 @@ public class PlayerView : MonoBehaviour
         if (moving)
         {
             // Sadece yürürken yön parametrelerini gönder
-            animator.SetFloat("MoveX", direction.x);
-            animator.SetFloat("MoveY", direction.y);
+            animator.SetFloat("x", direction.x);
+            animator.SetFloat("y", direction.y);
         }
     }
 }

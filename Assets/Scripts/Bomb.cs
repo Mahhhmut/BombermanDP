@@ -7,6 +7,7 @@ public class Bomb : NetworkBehaviour
     [SerializeField] private float timeToExplode = 3f;
     [SerializeField] private GameObject explosionPrefab;
     [SerializeField] private LayerMask solidLayer;
+    [SerializeField] private LayerMask BreakableLayer;
     [SerializeField] private GameObject[] powerUpPrefabs;
     [Range(0f, 1f)] [SerializeField] private float spawnChance = 0.3f;
 
@@ -80,27 +81,38 @@ public class Bomb : NetworkBehaviour
     }
 
     private void CheckDamage(Vector3 pos)
+{
+    if (!IsServer) return; // Yetki kontrolü
+
+    // SolidMap, Player ve Enemy katmanlarını tara
+    Collider2D hit = Physics2D.OverlapBox(pos, Vector2.one * 0.8f, 0f, 
+        LayerMask.GetMask("SolidMap", "Player", "Enemy", "BreakableMap"));
+    
+    if (hit != null)
     {
-        // Patlama alanındaki Player ve Enemy katmanlarını kontrol et
-        Collider2D hit = Physics2D.OverlapBox(pos, Vector2.one * 0.8f, 0f, LayerMask.GetMask("Player", "Enemy"));
-        
-        if (hit != null && IsServer)
+        // 1. Tag kontrolü: Sadece "Breakable" olanları yok et
+        if (hit.CompareTag("Breakable"))
         {
-            if (hit.CompareTag("Enemy"))
-            {
-                // Düşmanı ağ üzerinde tamamen yok et
-                var netObj = hit.GetComponent<NetworkObject>();
-                if (netObj != null) netObj.Despawn(true); 
-                
-                Debug.Log("Düşman bombayla patlatıldı!");
-            }
-            else if (hit.CompareTag("Player"))
-            {
-                // Oyuncu ölme kuralını çalıştır
-                hit.GetComponent<PlayerPresenter>().DieServerRpc();
-            }
+            var netObj = hit.GetComponent<NetworkObject>();
+            if (netObj != null && netObj.IsSpawned) 
+                netObj.Despawn(true); // Ağdan sil ve objeyi yok et
         }
+        // 2. Düşman kontrolü
+        else if (hit.CompareTag("Enemy"))
+        {
+            var netObj = hit.GetComponent<NetworkObject>();
+            if (netObj != null) netObj.Despawn(true);
+        }
+        // 3. Oyuncu kontrolü
+        else if (hit.CompareTag("Player"))
+        {
+            hit.GetComponent<PlayerPresenter>().DieServerRpc();
+        }
+        
+        // Not: Eğer çarptığı şeyin Tag'ı "Breakable" değilse (Kalıcı duvarsa),
+        // kod burayı pas geçer ve kalıcı duvara bir şey olmaz.
     }
+}
 
     private void TrySpawnPowerUp(Vector3 pos)
     {
