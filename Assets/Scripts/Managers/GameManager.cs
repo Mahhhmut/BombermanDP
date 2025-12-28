@@ -15,6 +15,7 @@ public class GameManager : NetworkBehaviour
     public Theme activeTheme { get; private set; } = Theme.city; 
 
     
+    
 
     void Awake()
     {
@@ -33,7 +34,12 @@ public void NotifyGameOverClientRpc(string message)
     // Her iki tarafın konsolunda büyük harflerle görünür
     Debug.Log($"<color=yellow>*** {message} ***</color>");
 
-    if (IsServer) StartCoroutine(ResetGameRoutine());
+    if (IsServer)
+    {
+        // Kazananı kaydet (Örnek: "Player 0" kazandıysa onu gönderir)
+        SaveEndGameResult(message); 
+        StartCoroutine(ResetGameRoutine());
+    }
 }
 
 private IEnumerator RespawnPlayersRoutine()
@@ -137,5 +143,19 @@ private IEnumerator RespawnPlayersRoutine()
         }
     }
 
+    private IPlayerRepository _playerRepo;
+
+    void Start()
+    {
+        string dbPath = System.IO.Path.Combine(Application.persistentDataPath, "GameDatabase.db");
+        _playerRepo = new SQLitePlayerRepository(dbPath);
+    }
+
+    public void SaveEndGameResult(string winner)
+    {
+        var stats = _playerRepo.GetPlayer(winner) ?? new PlayerStats { Username = winner };
+        stats.Wins++;
+        _playerRepo.AddOrUpdatePlayer(stats);
+    }
     
 }
