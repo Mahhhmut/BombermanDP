@@ -31,12 +31,11 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
 public void NotifyGameOverClientRpc(string message)
 {
-    // Her iki tarafın konsolunda büyük harflerle görünür
-    Debug.Log($"<color=yellow>*** {message} ***</color>");
-
+    // Doğrudan Log basmak yerine Observer'lara haber veriyoruz
+    GameEventManager.Instance.Notify("GameOver", message);
+    
     if (IsServer)
     {
-        // Kazananı kaydet (Örnek: "Player 0" kazandıysa onu gönderir)
         SaveEndGameResult(message); 
         StartCoroutine(ResetGameRoutine());
     }
